@@ -4,17 +4,21 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IMetadataGenerator.sol";
+import "./IContractMetadataGenerator.sol";
 
 contract Token is ERC721Royalty, Ownable {
     IMetadataGenerator public _metadataGenerator;
+    IContractMetadataGenerator public _contractMetadataGenerator;
 
     constructor(
         string memory name,
         string memory symbol,
-        address metadataGenerator
+        address metadataGenerator,
+        address contractMetadataGenerator
     ) ERC721(name, symbol) {
         _setDefaultRoyalty(msg.sender, 100);
         _metadataGenerator = IMetadataGenerator(metadataGenerator);
+        _contractMetadataGenerator = IContractMetadataGenerator(contractMetadataGenerator);
     }
 
     receive() external payable {}
@@ -31,6 +35,14 @@ contract Token is ERC721Royalty, Ownable {
 
     function setMetadataGenerator(address metadataGenerator) public onlyOwner {
         _metadataGenerator = IMetadataGenerator(metadataGenerator);
+    }
+
+    function setContractMetadataGenerator(address contractMetadataGenerator) public onlyOwner {
+        _contractMetadataGenerator = IContractMetadataGenerator(contractMetadataGenerator);
+    }
+
+    function contractURI() public view returns (string memory) {
+        return _contractMetadataGenerator.generateContractMetadata();
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
